@@ -1,6 +1,13 @@
 import axios from 'axios';
+import store from '../index';
 import socket from '../../socket';
-import { gotConversations, addConversation, setNewMessage, setSearchedUsers } from '../conversations';
+import {
+  gotConversations,
+  addConversation,
+  setNewMessage,
+  setSearchedUsers,
+  setMessagesRead,
+} from '../conversations';
 import { gotUser, setFetchingStatus } from '../user';
 
 axios.interceptors.request.use(async function (config) {
@@ -99,6 +106,29 @@ export const postMessage = (body) => async (dispatch) => {
     }
 
     sendMessage(data, body);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const saveMessagesRead = async (readMessages) => {
+  const { data } = await axios.put('/api/messages/read', readMessages);
+  return data;
+};
+
+export const updateMessagesRead = (userId, convoId) => async (dispatch) => {
+  try {
+    dispatch(setMessagesRead(userId, convoId));
+
+    const messages = store
+      .getState()
+      .conversations.find((conversation) => conversation.id === convoId)
+      .messages.filter((msg) => msg.senderId !== userId);
+
+    const lastMessageId = messages[messages.length - 1].id;
+    const data = await saveMessagesRead({ conversationId: convoId, lastMessageId: lastMessageId });
+
+    // Todo: Emit socket notification that message has been read
   } catch (error) {
     console.error(error);
   }
