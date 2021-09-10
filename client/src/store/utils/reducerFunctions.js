@@ -78,3 +78,33 @@ export const addNewConvoToStore = (state, recipientId, message) => {
     }
   });
 };
+
+export const setMessagesReadInStore = (state, recipientId, convoId) => {
+  return state.map((convo) => {
+    // Find current conversation
+    if (convo.id === convoId) {
+      const convoCopy = { ...convo };
+
+      // Set all messages isRead = true and isLastRead = false
+      convoCopy.messages = convoCopy.messages.map((message) => {
+        if (recipientId !== message.senderId) {
+          const messageCopy = { ...message };
+
+          messageCopy.isRead = true;
+          messageCopy.isLastRead = false;
+
+          return messageCopy;
+        } else {
+          return message;
+        }
+      });
+
+      // Set isLastRead for last message to true
+      convoCopy.messages[convoCopy.messages.length - 1].isLastRead = true;
+
+      return convoCopy;
+    } else {
+      return convo;
+    }
+  });
+};
