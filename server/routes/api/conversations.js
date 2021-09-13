@@ -28,6 +28,13 @@ router.get('/', async (req, res, next) => {
               WHERE "message"."conversationId" = "conversation"."id")`),
             'lastMessageDate',
           ],
+          [
+            literal(`
+            (SELECT COUNT(*)::int
+            FROM "messages" AS "message"
+            WHERE "message"."conversationId" = "conversation"."id" AND "message"."isRead" IS false )`),
+            'unreadMessagesQty',
+          ],
         ],
       },
 
@@ -86,16 +93,6 @@ router.get('/', async (req, res, next) => {
       // set properties for notification count and latest message preview
       convoJSON.latestMessageText = convoJSON.messages[0].text;
       conversations[i] = convoJSON;
-
-      const countUnreadMessages = (unreadTotal, message) => {
-        if (userId !== message.senderId && !message.isRead) {
-          return unreadTotal + 1;
-        } else {
-          return unreadTotal;
-        }
-      };
-
-      conversations[i].unreadMessagesQty = conversations[i].messages.reduce(countUnreadMessages, 0);
     }
 
     res.json(conversations);
