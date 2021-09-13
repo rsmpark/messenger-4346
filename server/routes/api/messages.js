@@ -9,8 +9,14 @@ router.post('/', async (req, res, next) => {
     if (!req.user) {
       return res.sendStatus(401);
     }
+
     const senderId = req.user.id;
     const { recipientId, text, conversationId, sender } = req.body;
+
+    // Invalid sender
+    if (!conversation) {
+      return res.status(403).json({ error: 'Invalid participant' });
+    }
 
     // if we already know conversation id, we can save time and just add it to message and return
     if (conversationId) {
@@ -49,6 +55,13 @@ router.put('/read', async (req, res, next) => {
 
     const recipientId = req.user.id;
     const { conversationId, lastMessageId } = req.body;
+
+    let conversation = await Conversation.validateSender(senderId, conversationId);
+
+    // Invalid sender
+    if (!conversation) {
+      return res.status(403).json({ error: 'Invalid participant' });
+    }
 
     const message = await Message.update(
       { isRead: true },
