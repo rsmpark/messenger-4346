@@ -116,19 +116,25 @@ const saveMessagesRead = async (readMessages) => {
   return data;
 };
 
-export const updateMessagesRead = (userId, convoId) => async (dispatch) => {
+const sendMessageRead = (data) => {
+  socket.emit('message-read', data);
+};
+
+export const updateMessagesRead = (convoId) => async (dispatch) => {
   try {
-    dispatch(setMessagesRead(userId, convoId));
+    const user = store.getState().user;
+
+    dispatch(setMessagesRead(user.id, convoId));
 
     const messages = store
       .getState()
       .conversations.find((conversation) => conversation.id === convoId)
-      .messages.filter((msg) => msg.senderId !== userId);
+      .messages.filter((msg) => msg.senderId !== user.id);
 
     const lastMessageId = messages[messages.length - 1].id;
     const data = await saveMessagesRead({ conversationId: convoId, lastMessageId: lastMessageId });
 
-    // Todo: Emit socket notification that message has been read
+    sendMessageRead(data);
   } catch (error) {
     console.error(error);
   }
