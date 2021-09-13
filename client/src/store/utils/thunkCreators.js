@@ -74,6 +74,12 @@ export const logout = (id) => async (dispatch) => {
 export const fetchConversations = () => async (dispatch) => {
   try {
     const { data } = await axios.get('/api/conversations');
+
+    // Set latest sent message text
+    data.forEach((convo) => {
+      convo.latestMessageText = convo.messages[convo.messages.length - 1].text;
+    });
+
     dispatch(gotConversations(data));
   } catch (error) {
     console.error(error);
