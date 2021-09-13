@@ -13,17 +13,12 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 'bold',
     letterSpacing: -0.2,
   },
-  previewText: {
+  previewText: (props) => ({
     fontSize: 12,
-    color: '#9CADC8',
+    color: props.unread ? 'black' : '#9CADC8',
     letterSpacing: -0.17,
-  },
-  previewUnreadText: {
-    fontSize: 12,
-    color: 'black',
-    letterSpacing: -0.17,
-    fontWeight: 'bold',
-  },
+    fontWeight: props.unread ? 'bold' : null,
+  }),
   countNotification: {
     height: 20,
     width: 20,
@@ -44,17 +39,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ChatContent = (props) => {
-  const classes = useStyles();
-
   const { conversation, user } = props;
   const { unreadMessagesQty, messages, latestMessageText, otherUser } = conversation;
 
-  // Style unread chat
-  const messageUnreadExistsClass = () => {
-    return unreadMessagesQty > 0 && messages[messages.length - 1].senderId !== user.id
-      ? classes.previewUnreadText
-      : classes.previewText;
-  };
+  const styleProps = { unread: unreadMessagesQty > 0 && messages[messages.length - 1].senderId !== user.id };
+  const classes = useStyles(styleProps);
 
   const MessageCount = () => {
     return unreadMessagesQty > 0 && messages[messages.length - 1].senderId !== user.id ? (
@@ -68,7 +57,7 @@ const ChatContent = (props) => {
     <Box className={classes.root}>
       <Box>
         <Typography className={classes.username}>{otherUser.username}</Typography>
-        <Typography className={messageUnreadExistsClass}> {latestMessageText}</Typography>
+        <Typography className={classes.previewText}> {latestMessageText}</Typography>
       </Box>
       <MessageCount></MessageCount>
     </Box>
