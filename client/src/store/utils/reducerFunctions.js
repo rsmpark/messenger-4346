@@ -99,6 +99,7 @@ export const setMessagesReadInStore = (state, recipientId, convoId) => {
         }
       });
 
+      debugger;
       // Set isLastRead for last message to true
       convoCopy.messages[convoCopy.messages.length - 1].isLastRead = true;
 
