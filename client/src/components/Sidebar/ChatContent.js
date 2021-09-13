@@ -57,7 +57,6 @@ const ChatContent = (props) => {
   };
 
   const MessageCount = () => {
-    console.log(unreadMessagesQty);
     return unreadMessagesQty > 0 && messages[messages.length - 1].senderId !== user.id ? (
       <Box className={classes.center}>
         <Typography className={classes.countNotification}>{unreadMessagesQty}</Typography>

@@ -48,7 +48,6 @@ router.put('/read', async (req, res, next) => {
     }
 
     const recipientId = req.user.id;
-    console.log(recipientId);
     const { conversationId, lastMessageId } = req.body;
 
     const message = await Message.update(
