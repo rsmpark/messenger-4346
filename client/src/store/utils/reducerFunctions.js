@@ -16,6 +16,7 @@ export const addMessageToStore = (state, payload) => {
       const convoCopy = { ...convo };
       convoCopy.messages.push(message);
       convoCopy.latestMessageText = message.text;
+      convoCopy.unreadMessageQty += 1;
       return convoCopy;
     } else {
       return convo;
@@ -74,6 +75,7 @@ export const addNewConvoToStore = (state, recipientId, message) => {
       newConvo.id = message.conversationId;
       newConvo.messages.push(message);
       newConvo.latestMessageText = message.text;
+      newConvo.unreadMessageQty += 1;
       return newConvo;
     } else {
       return convo;
@@ -87,13 +89,23 @@ export const setMessagesReadInStore = (state, recipientId, convoId) => {
     if (convo.id === convoId) {
       const convoCopy = { ...convo };
 
+      let lastSentMessage = {
+        id: 0,
+        idx: 0,
+      };
+
       // Set all messages isRead = true and isLastRead = false
-      convoCopy.messages = convoCopy.messages.map((message) => {
+      convoCopy.messages = convoCopy.messages.map((message, idx) => {
         if (recipientId !== message.senderId) {
           const messageCopy = { ...message };
 
           messageCopy.isRead = true;
-          messageCopy.isLastRead = false;
+          messageCopy.isReadLast = false;
+
+          if (messageCopy.id > lastSentMessage.id) {
+            lastSentMessage.id = messageCopy.id;
+            lastSentMessage.idx = idx;
+          }
 
           return messageCopy;
         } else {
@@ -102,7 +114,8 @@ export const setMessagesReadInStore = (state, recipientId, convoId) => {
       });
 
       // Set isLastRead for last message to true
-      convoCopy.messages[convoCopy.messages.length - 1].isLastRead = true;
+      convoCopy.messages[lastSentMessage.idx].isReadLast = true;
+      convoCopy.unreadMessagesQty = 0;
 
       return convoCopy;
     } else {
