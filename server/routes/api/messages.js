@@ -70,34 +70,6 @@ router.put('/read', async (req, res, next) => {
       }
     );
 
-    const lastRead = await Message.update(
-      { isReadLast: true },
-      {
-        where: {
-          id: {
-            [Op.eq]: lastMessageId,
-          },
-        },
-      }
-    );
-    const prevLastRead = await Message.update(
-      { isReadLast: false },
-      {
-        where: {
-          [Op.and]: {
-            id: {
-              [Op.ne]: lastMessageId,
-            },
-            senderId: {
-              [Op.ne]: recipientId,
-            },
-            conversationId: {
-              [Op.eq]: conversationId,
-            },
-          },
-        },
-      }
-    );
     res.json({ lastMessageId, conversationId, recipientId });
   } catch (error) {
     next(error);
