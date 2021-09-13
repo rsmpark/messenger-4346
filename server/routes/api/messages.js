@@ -1,9 +1,10 @@
-const router = require("express").Router();
-const { Conversation, Message } = require("../../db/models");
-const onlineUsers = require("../../onlineUsers");
+const router = require('express').Router();
+const { Conversation, Message } = require('../../db/models');
+const onlineUsers = require('../../onlineUsers');
+const { Op } = require('sequelize');
 
 // expects {recipientId, text, conversationId } in body (conversationId will be null if no conversation exists yet)
-router.post("/", async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   try {
     if (!req.user) {
       return res.sendStatus(401);
@@ -17,10 +18,7 @@ router.post("/", async (req, res, next) => {
       return res.json({ message, sender });
     }
     // if we don't have conversation id, find a conversation to make sure it doesn't already exist
-    let conversation = await Conversation.findConversation(
-      senderId,
-      recipientId
-    );
+    let conversation = await Conversation.findConversation(senderId, recipientId);
 
     if (!conversation) {
       // create conversation
@@ -43,4 +41,66 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+router.put('/read', async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.sendStatus(401);
+    }
+
+    const recipientId = req.user.id;
+    console.log(recipientId);
+    const { conversationId, lastMessageId } = req.body;
+
+    const message = await Message.update(
+      { isRead: true },
+      {
+        where: {
+          [Op.and]: {
+            id: {
+              [Op.lte]: lastMessageId,
+            },
+            senderId: {
+              [Op.ne]: recipientId,
+            },
+            conversationId: {
+              [Op.eq]: conversationId,
+            },
+          },
+        },
+      }
+    );
+
+    const lastRead = await Message.update(
+      { isReadLast: true },
+      {
+        where: {
+          id: {
+            [Op.eq]: lastMessageId,
+          },
+        },
+      }
+    );
+    const prevLastRead = await Message.update(
+      { isReadLast: false },
+      {
+        where: {
+          [Op.and]: {
+            id: {
+              [Op.ne]: lastMessageId,
+            },
+            senderId: {
+              [Op.ne]: recipientId,
+            },
+            conversationId: {
+              [Op.eq]: conversationId,
+            },
+          },
+        },
+      }
+    );
+    res.json({ lastMessageId, conversationId, recipientId });
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;
