@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { User, Conversation, Message } = require('../../db/models');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const onlineUsers = require('../../onlineUsers');
 
 // get all conversations for a user, include latest message text for preview, and all messages
@@ -18,10 +18,26 @@ router.get('/', async (req, res, next) => {
           user2Id: userId,
         },
       },
-      attributes: ['id'],
-      order: [[Message, 'createdAt', 'ASC']],
+      attributes: {
+        include: [
+          [
+            // Sub-query to find the last message date for each conversation
+            literal(`
+            (SELECT MAX("message"."createdAt")
+              FROM "messages" AS "message"
+              WHERE "message"."conversationId" = "conversation"."id")`),
+            'lastMessageDate',
+          ],
+        ],
+      },
+
+      order: [
+        // Order conversation by last message date (DESC) -> order messages by date (ASC)
+        [literal(`"lastMessageDate"`), 'DESC'],
+        [Message, 'createdAt', 'ASC'],
+      ],
       include: [
-        { model: Message, order: ['createdAt', 'ASC'] },
+        { model: Message },
         {
           model: User,
           as: 'user1',
