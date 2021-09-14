@@ -59,7 +59,7 @@ const ChatContent = (props) => {
         <Typography className={classes.username}>{otherUser.username}</Typography>
         <Typography className={classes.previewText}> {latestMessageText}</Typography>
       </Box>
-      <MessageCount></MessageCount>
+      <MessageCount />
     </Box>
   );
 };
