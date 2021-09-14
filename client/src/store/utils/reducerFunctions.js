@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 export const addMessageToStore = (state, payload) => {
   const { message, sender } = payload;
   // if sender isn't null, that means the message needs to be put in a brand new convo
@@ -90,7 +92,7 @@ export const setMessagesReadInStore = (state, recipientId, convoId) => {
       const convoCopy = { ...convo };
 
       let lastSentMessage = {
-        id: 0,
+        createdAt: moment('1990-01-01'),
         idx: 0,
       };
 
@@ -102,8 +104,8 @@ export const setMessagesReadInStore = (state, recipientId, convoId) => {
           messageCopy.isRead = true;
           messageCopy.isReadLast = false;
 
-          if (messageCopy.id > lastSentMessage.id) {
-            lastSentMessage.id = messageCopy.id;
+          if (moment(messageCopy.createdAt) > lastSentMessage.createdAt) {
+            lastSentMessage.createdAt = moment(messageCopy.createdAt);
             lastSentMessage.idx = idx;
           }
 
