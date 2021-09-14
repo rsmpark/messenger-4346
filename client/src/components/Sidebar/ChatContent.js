@@ -46,11 +46,11 @@ const ChatContent = (props) => {
   const classes = useStyles(styleProps);
 
   const MessageCount = () => {
-    return unreadMessagesQty > 0 && messages[messages.length - 1].senderId !== user.id ? (
+    return unreadMessagesQty > 0 && messages[messages.length - 1].senderId !== user.id && (
       <Box className={classes.center}>
         <Typography className={classes.countNotification}>{unreadMessagesQty}</Typography>
       </Box>
-    ) : null;
+    );
   };
 
   return (
