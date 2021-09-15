@@ -104,8 +104,8 @@ export const setMessagesReadInStore = (state, recipientId, convoId) => {
           messageCopy.isRead = true;
           messageCopy.isReadLast = false;
 
-          if (moment(messageCopy.createdAt) > lastSentMessage.createdAt) {
-            lastSentMessage.createdAt = moment(messageCopy.createdAt);
+          if (moment(messageCopy.createdAt) < lastSentMessage.createdAt) {
+            lastSentMessage.createdAt = messageCopy.createdAt;
             lastSentMessage.idx = idx;
           }
 
@@ -115,8 +115,6 @@ export const setMessagesReadInStore = (state, recipientId, convoId) => {
         }
       });
 
-      // Set isLastRead for last message to true
-      convoCopy.messages[lastSentMessage.idx].isReadLast = true;
       convoCopy.unreadMessagesQty = 0;
 
       return convoCopy;

@@ -15,11 +15,6 @@ const Message = db.define('message', {
     allowNull: false,
     defaultValue: false,
   },
-  isReadLast: {
-    type: Sequelize.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
-  },
 });
 
 module.exports = Message;

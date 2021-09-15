@@ -13,11 +13,6 @@ router.post('/', async (req, res, next) => {
     const senderId = req.user.id;
     const { recipientId, text, conversationId, sender } = req.body;
 
-    // Invalid sender
-    if (!conversation) {
-      return res.status(403).json({ error: 'Invalid participant' });
-    }
-
     // if we already know conversation id, we can save time and just add it to message and return
     if (conversationId) {
       const message = await Message.create({ senderId, text, conversationId });
@@ -56,7 +51,7 @@ router.put('/read', async (req, res, next) => {
     const recipientId = req.user.id;
     const { conversationId, lastMessageId } = req.body;
 
-    let conversation = await Conversation.validateSender(senderId, conversationId);
+    let conversation = await Conversation.isValidSender(recipientId, conversationId);
 
     // Invalid sender
     if (!conversation) {
@@ -70,35 +65,6 @@ router.put('/read', async (req, res, next) => {
           [Op.and]: {
             id: {
               [Op.lte]: lastMessageId,
-            },
-            senderId: {
-              [Op.ne]: recipientId,
-            },
-            conversationId: {
-              [Op.eq]: conversationId,
-            },
-          },
-        },
-      }
-    );
-
-    const lastRead = await Message.update(
-      { isReadLast: true },
-      {
-        where: {
-          id: {
-            [Op.eq]: lastMessageId,
-          },
-        },
-      }
-    );
-    const prevLastRead = await Message.update(
-      { isReadLast: false },
-      {
-        where: {
-          [Op.and]: {
-            id: {
-              [Op.ne]: lastMessageId,
             },
             senderId: {
               [Op.ne]: recipientId,
