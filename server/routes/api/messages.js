@@ -1,13 +1,15 @@
-const router = require("express").Router();
-const { Conversation, Message } = require("../../db/models");
-const onlineUsers = require("../../onlineUsers");
+const router = require('express').Router();
+const { Conversation, Message } = require('../../db/models');
+const onlineUsers = require('../../onlineUsers');
+const { Op } = require('sequelize');
 
 // expects {recipientId, text, conversationId } in body (conversationId will be null if no conversation exists yet)
-router.post("/", async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   try {
     if (!req.user) {
       return res.sendStatus(401);
     }
+
     const senderId = req.user.id;
     const { recipientId, text, conversationId, sender } = req.body;
 
@@ -17,10 +19,7 @@ router.post("/", async (req, res, next) => {
       return res.json({ message, sender });
     }
     // if we don't have conversation id, find a conversation to make sure it doesn't already exist
-    let conversation = await Conversation.findConversation(
-      senderId,
-      recipientId
-    );
+    let conversation = await Conversation.findConversation(senderId, recipientId);
 
     if (!conversation) {
       // create conversation
@@ -43,4 +42,44 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+router.put('/read', async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.sendStatus(401);
+    }
+
+    const recipientId = req.user.id;
+    const { conversationId, lastMessageId } = req.body;
+
+    let conversation = await Conversation.isValidSender(recipientId, conversationId);
+
+    // Invalid sender
+    if (!conversation) {
+      return res.status(403).json({ error: 'Invalid participant' });
+    }
+
+    const message = await Message.update(
+      { isRead: true },
+      {
+        where: {
+          [Op.and]: {
+            id: {
+              [Op.lte]: lastMessageId,
+            },
+            senderId: {
+              [Op.ne]: recipientId,
+            },
+            conversationId: {
+              [Op.eq]: conversationId,
+            },
+          },
+        },
+      }
+    );
+
+    res.json({ lastMessageId, conversationId, recipientId });
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;

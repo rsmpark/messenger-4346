@@ -28,6 +28,13 @@ router.get('/', async (req, res, next) => {
               WHERE "message"."conversationId" = "conversation"."id")`),
             'lastMessageDate',
           ],
+          [
+            literal(`
+            (SELECT COUNT(*)::int
+            FROM "messages" AS "message"
+            WHERE "message"."conversationId" = "conversation"."id" AND "message"."isRead" IS false )`),
+            'unreadMessagesQty',
+          ],
         ],
       },
 

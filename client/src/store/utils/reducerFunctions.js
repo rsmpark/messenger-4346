@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 export const addMessageToStore = (state, payload) => {
   const { message, sender } = payload;
   // if sender isn't null, that means the message needs to be put in a brand new convo
@@ -16,6 +18,7 @@ export const addMessageToStore = (state, payload) => {
       const convoCopy = { ...convo };
       convoCopy.messages.push(message);
       convoCopy.latestMessageText = message.text;
+      convoCopy.unreadMessageQty += 1;
       return convoCopy;
     } else {
       return convo;
@@ -74,7 +77,47 @@ export const addNewConvoToStore = (state, recipientId, message) => {
       newConvo.id = message.conversationId;
       newConvo.messages.push(message);
       newConvo.latestMessageText = message.text;
+      newConvo.unreadMessageQty += 1;
       return newConvo;
+    } else {
+      return convo;
+    }
+  });
+};
+
+export const setMessagesReadInStore = (state, recipientId, convoId) => {
+  return state.map((convo) => {
+    // Find current conversation
+    if (convo.id === convoId) {
+      const convoCopy = { ...convo };
+
+      let lastSentMessage = {
+        createdAt: moment('1990-01-01'),
+        idx: 0,
+      };
+
+      // Set all messages isRead = true and isLastRead = false
+      convoCopy.messages = convoCopy.messages.map((message, idx) => {
+        if (recipientId !== message.senderId) {
+          const messageCopy = { ...message };
+
+          messageCopy.isRead = true;
+          messageCopy.isReadLast = false;
+
+          if (moment(messageCopy.createdAt) < lastSentMessage.createdAt) {
+            lastSentMessage.createdAt = messageCopy.createdAt;
+            lastSentMessage.idx = idx;
+          }
+
+          return messageCopy;
+        } else {
+          return message;
+        }
+      });
+
+      convoCopy.unreadMessagesQty = 0;
+
+      return convoCopy;
     } else {
       return convo;
     }

@@ -1,6 +1,13 @@
 import axios from 'axios';
+import store from '../index';
 import socket from '../../socket';
-import { gotConversations, addConversation, setNewMessage, setSearchedUsers } from '../conversations';
+import {
+  gotConversations,
+  addConversation,
+  setNewMessage,
+  setSearchedUsers,
+  setMessagesRead,
+} from '../conversations';
 import { gotUser, setFetchingStatus } from '../user';
 
 axios.interceptors.request.use(async function (config) {
@@ -67,6 +74,7 @@ export const logout = (id) => async (dispatch) => {
 export const fetchConversations = () => async (dispatch) => {
   try {
     const { data } = await axios.get('/api/conversations');
+
     dispatch(gotConversations(data));
   } catch (error) {
     console.error(error);
@@ -99,6 +107,35 @@ export const postMessage = (body) => async (dispatch) => {
     }
 
     sendMessage(data, body);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const saveMessagesRead = async (readMessages) => {
+  const { data } = await axios.put('/api/messages/read', readMessages);
+  return data;
+};
+
+const sendMessageRead = (data) => {
+  socket.emit('message-read', data);
+};
+
+export const updateMessagesRead = (convoId) => async (dispatch) => {
+  try {
+    const user = store.getState().user;
+
+    dispatch(setMessagesRead(user.id, convoId));
+
+    const messages = store
+      .getState()
+      .conversations.find((conversation) => conversation.id === convoId)
+      .messages.filter((msg) => msg.senderId !== user.id);
+
+    const lastMessageId = messages[messages.length - 1].id;
+    const data = await saveMessagesRead({ conversationId: convoId, lastMessageId: lastMessageId });
+
+    sendMessageRead(data);
   } catch (error) {
     console.error(error);
   }
